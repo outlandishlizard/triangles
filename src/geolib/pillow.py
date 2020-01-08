@@ -55,4 +55,4 @@ def save_animation(filename, frame_list, format='GIF', frame_duration=50):
 
 
 def blank_image(l, w, bg=(0, 0, 0), mode='RGB'):
-    return Image.new(mode, (l, w), bg=bg)
+    return Image.new(mode, (l, w), color=bg)
