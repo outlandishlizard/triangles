@@ -1,5 +1,5 @@
-from src.draw import draw_graph
-from src.inlays import randomTriangle, doInlays, strategy_samerandom, all_fns
+from geolib.draw import draw_graph
+from geolib.inlays import randomTriangle, doInlays, strategy_samerandom, all_fns
 
 LEN = 1000
 WID = 1000

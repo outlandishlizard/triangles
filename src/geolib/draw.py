@@ -5,7 +5,7 @@ import numpy as np
 from PIL import ImageDraw
 from PIL.ImagePath import *
 
-from src.helpers import to_tups
+from .helpers import to_tups
 
 LEN = 500
 WID = 500

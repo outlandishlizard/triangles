@@ -4,7 +4,7 @@ import random
 import math
 import networkx as nx
 
-from src.helpers import *
+from .helpers import *
 
 
 class IDNode(object):
