@@ -1,0 +1,4 @@
+decorator==4.4.1
+networkx==2.4
+numpy==1.18.0
+Pillow==7.0.0
