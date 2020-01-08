@@ -2,10 +2,7 @@ import random
 
 import networkx as nx
 import numpy as np
-from PIL import ImageDraw
 from PIL.ImagePath import *
-
-from .helpers import to_tups
 
 LEN = 500
 WID = 500
@@ -84,36 +81,7 @@ def propagate_fn(gr, start, fn, fn_args, max_depth=-1):
     return touched_nodes
 
 
-def draw_graph(gr, length=1000, width=1000, overwrite_image=None):
-    if overwrite_image:
-        img = overwrite_image
-    else:
-        img = Image.new('RGB', (length, width))
-    draw = ImageDraw.Draw(img)
 
-    topological_ordered = list(reversed(list(nx.algorithms.topological_sort(gr))))
-    for node in topological_ordered:
-        data = node.data
-        try:
-            color = node.attrs['color']
-        except KeyError:
-            color = (255, 0, 0)
-        draw.polygon(Path(to_tups(data)), outline=color)
-    return img
-
-
-def draw_nodes(nodes, overwrite_image=None):
-    if overwrite_image:
-        img = overwrite_image.copy()
-    else:
-        img = Image.new('RGB', (LEN, WID))
-    draw = ImageDraw.Draw(img)
-
-    for node in nodes:
-        data = node.data
-        color = node.attrs['color']
-        draw.polygon(Path(to_tups(data)), outline=color)
-    return img
 
 
 def apply_inherited_color_mutate(gr):
