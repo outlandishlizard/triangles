@@ -1,3 +1,4 @@
+
 import networkx as nx
 from PIL import ImageDraw
 from PIL.ImagePath import *
@@ -40,7 +41,7 @@ def animate_fn(gr, fn, canvas, times_to_apply=25):
         nodes = []
         for generation, node in changelist:
             if generation != curr:
-                frame = draw_nodes(nodes, overwrite_image=frame)
+                frame = draw_nodes(nodes, frame)
                 frame_list.append(frame)
                 nodes = []
             nodes.append(node)
@@ -48,10 +49,10 @@ def animate_fn(gr, fn, canvas, times_to_apply=25):
     return frame_list
 
 
-def save_animation(frame_list, format='GIF', frame_duration=50):
-    return frame_list[0].save('test.gif', format=format, append_images=frame_list[1:], save_all=True,
+def save_animation(filename, frame_list, format='GIF', frame_duration=50):
+    return frame_list[0].save(filename, format=format, append_images=frame_list[1:], save_all=True,
                               duration=frame_duration, loop=0)
 
 
 def blank_image(l, w, bg=(0, 0, 0), mode='RGB'):
-    return Image.new(mode, (l, w))
+    return Image.new(mode, (l, w), bg=bg)
