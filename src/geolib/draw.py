@@ -2,13 +2,8 @@ import random
 
 import networkx as nx
 import numpy as np
-from PIL.ImagePath import *
-
-LEN = 500
-WID = 500
 
 
-# print(random.getstate())
 def mutate_color(color):
     ret = []
     for x in color:
@@ -81,9 +76,6 @@ def propagate_fn(gr, start, fn, fn_args, max_depth=-1):
     return touched_nodes
 
 
-
-
-
 def apply_inherited_color_mutate(gr):
     ordered = (list(nx.algorithms.topological_sort(gr)))
     start = ordered[0]
@@ -91,18 +83,3 @@ def apply_inherited_color_mutate(gr):
     return propagate_fn(gr, start, inherit_color_with_mutate, [mutate_with_clamp])
 
 
-def animate_fn(gr, fn, frames=25, speed=50):
-    frame_list = []
-    frame = Image.new('RGB', (LEN, WID))
-    for i in range(frames):
-        changelist = sorted(fn(gr))[::-1]
-        curr = changelist[0][0]
-        nodes = []
-        for generation, node in changelist:
-            if generation != curr:
-                frame = draw_nodes(nodes, overwrite_image=frame)
-                frame_list.append(frame)
-                nodes = []
-            nodes.append(node)
-            curr = generation
-    frame_list[0].save('test.gif', format='GIF', append_images=frame_list[1:], save_all=True, duration=speed, loop=0)
