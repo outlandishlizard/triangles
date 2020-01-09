@@ -57,6 +57,11 @@ def randomTriangle(l, w):
     return tri
 
 
+def fillingTriangle(l, w):
+    tri = np.array([np.array(x) for x in [[1, l / 2], [w, 1], [l, w]]])
+    print(tri)
+    return tri
+
 def distance(p1, p2):
     x, y = p1 - p2
     return math.sqrt(x * x + y * y)
