@@ -32,6 +32,16 @@ def draw_nodes(nodes, canvas):
     return canvas
 
 
+def blend_frames(frame1, frame2, n):
+    interframes = []
+    for i in range(1, n):
+        alpha = i / n
+        interframes.append(Image.blend(frame1, frame2, alpha))
+        if interframes[-1] == frame2:
+            print('stopped blend early')
+            break
+    return [frame1] + interframes + [frame2]
+
 def animate_fn(gr, fn, canvas, times_to_apply=25):
     frame_list = []
     frame = canvas.copy()
@@ -41,7 +51,9 @@ def animate_fn(gr, fn, canvas, times_to_apply=25):
         nodes = []
         for generation, node in changelist:
             if generation != curr:
+                prev_frame = frame
                 frame = draw_nodes(nodes, frame)
+                frame_list += blend_frames(prev_frame, frame, 5)
                 frame_list.append(frame)
                 nodes = []
             nodes.append(node)
@@ -51,7 +63,7 @@ def animate_fn(gr, fn, canvas, times_to_apply=25):
 
 def save_animation(filename, frame_list, format='GIF', frame_duration=50):
     return frame_list[0].save(filename, format=format, append_images=frame_list[1:], save_all=True,
-                              duration=frame_duration, loop=0)
+                              duration=frame_duration, loop=0, optimize=True)
 
 
 def blank_image(l, w, bg=(0, 0, 0), mode='RGB'):
