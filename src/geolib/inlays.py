@@ -1,7 +1,7 @@
 import itertools
+import math
 import random
 
-import math
 import networkx as nx
 
 from .helpers import *
@@ -17,7 +17,7 @@ class IDNode(object):
         self.attrs = {}
 
     def __hash__(self):
-        return self.ctr.__hash__()
+        return self.ctr
 
     def cmp(self, other):
         if type(self) == type(other):
@@ -57,6 +57,19 @@ def randomTriangle(l, w):
     return tri
 
 
+def fillingTiled(l, w, n=4):
+    mid_l = l / n
+    mid_w = w / n
+    for i in range(n):
+        y_1 = mid_w * i
+        y_2 = y_1 + mid_w
+        for j in range(n):
+            x_1 = mid_l * j
+            x_2 = x_1 + mid_l
+            yield np.array([np.array(pair) for pair in [(x_1, y_1), (x_2, y_1), (x_1, y_2)]])
+            yield np.array([np.array(pair) for pair in [(x_1, y_2), (x_2, y_1), (x_2, y_2)]])
+
+
 def fillingTriangle(l, w):
     tri = np.array([np.array(x) for x in [[1, l / 2], [w, 1], [l, w]]])
     print(tri)
@@ -91,20 +104,20 @@ def trigAngles(trig):
 
 def isTooSmall(trig, area_limit=250, dist_limit=10, angle_limit=15):
     if trigArea(trig) < area_limit:
-        print("area limit hit")
+        # print("area limit hit")
         return True
     for a, b in itertools.combinations(trig, 2):
         dist = distance(a, b)
         # print(dist)
         if dist < dist_limit:
-            print("point distance limit hit")
+            #print("point distance limit hit")
             return True
 
     angles = trigAngles(trig)
     for angle in angles:
         # print('a',angle)
         if angle < angle_limit:
-            print("angle limit hit", angle)
+            #print("angle limit hit", angle)
             return True
 
     return False
@@ -157,6 +170,10 @@ def subdivideLine(line, n):
         pts.append(pt)
     # print(pts)
     return pts
+
+
+def getMidpoint(a, b):
+    return getPointTowards(a, b, scale=.5)
 
 
 def inlayRays_deterministic(trig, n=None):
@@ -219,7 +236,7 @@ def doRandomInlays(trig, n):
     if n <= 0:
         return [], gr
     if isTooSmall(trig.data, angle_limit=5):
-        print('Too small, aborting at n:', n)
+        #print('Too small, aborting at n:', n)
         return [], gr
 
     inlay = trig.data
@@ -246,11 +263,22 @@ def doRandomInlays(trig, n):
     return [main] + extras, gr
 
 
+def outlayReflect(trig):
+    # Keep two points, reflect 1 across them.
+    p1, p2, p3 = trig
+    mid = getMidpoint(p1, p2)
+    reflected = mid - (p3 - mid)
+    new = np.array([p1, p2, reflected])
+    gr = nx.DiGraph()
+    gr.add_node(IDNode(new))
+    return [new], gr
+
+
 def strategy_bydepth(node, n, fns):
     # This doesn't produce a perfectly symmetrical result because some functions themselves contain randomness
     # For example, inlayRays picks n and the starting vertex at random. This could be fixed by using a seed
     # derived from some shared randomness  and the current depth.
-    print(n, n % len(fns))
+    # print(n, n % len(fns))
     return fns[n % len(fns)]
 
 
@@ -278,7 +306,7 @@ def doInlays(trig, strategy, n=100, strategy_args=None):
         strategy_args = []
 
     if isTooSmall(trig.data, angle_limit=3):
-        print('Too small, aborting at n:', n)
+        #print('Too small, aborting at n:', n)
         return [], nx.DiGraph()
 
     gr = nx.DiGraph()
@@ -288,7 +316,7 @@ def doInlays(trig, strategy, n=100, strategy_args=None):
 
     all_strategy_args = [trig, n] + strategy_args
     fn = strategy(*all_strategy_args)
-    print(fn)
+    #print(fn)
     main, extras = fn(inlay)
     main = IDNode(main)
     extras = [IDNode(extra) for extra in extras]
