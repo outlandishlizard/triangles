@@ -47,13 +47,13 @@ class IDNode(object):
 def randomPoint(l, w):
     x = random.random() * l
     y = random.random() * w
-    return np.array([x, y])
+    return np.array([x, y], dtype=np.int32)
 
 
 def randomTriangle(l, w):
-    tri = np.array([randomPoint(l, w), randomPoint(l, w), randomPoint(l, w)])
+    tri = IDNode(np.array([randomPoint(l, w), randomPoint(l, w), randomPoint(l, w)], dtype=np.int32))
     while isTooSmall(tri):
-        tri = np.array([randomPoint(l, w), randomPoint(l, w), randomPoint(l, w)])
+        tri = IDNode(np.array([randomPoint(l, w), randomPoint(l, w), randomPoint(l, w)], dtype=np.int32))
     return tri
 
 
@@ -66,13 +66,13 @@ def fillingTiled(l, w, n=4):
         for j in range(n):
             x_1 = mid_l * j
             x_2 = x_1 + mid_l
-            yield np.array([np.array(pair) for pair in [(x_1, y_1), (x_2, y_1), (x_1, y_2)]])
-            yield np.array([np.array(pair) for pair in [(x_1, y_2), (x_2, y_1), (x_2, y_2)]])
+            yield np.array([np.array(pair) for pair in [(x_1, y_1), (x_2, y_1), (x_1, y_2)]], dtype=np.int32)
+            yield np.array([np.array(pair) for pair in [(x_1, y_2), (x_2, y_1), (x_2, y_2)]], dtype=np.int32)
 
 
 def fillingTriangle(l, w):
-    tri = np.array([np.array(x) for x in [[1, l / 2], [w, 1], [l, w]]])
-    print(tri)
+    tri = np.array([np.array(x) for x in [[1, l / 2], [w, 1], [l, w]]], dtype=np.int32)
+    # print(tri)
     return tri
 
 def distance(p1, p2):
@@ -80,21 +80,15 @@ def distance(p1, p2):
     return math.sqrt(x * x + y * y)
 
 
-def trigArea(trig):
+def trigArea(distances):
     # Heron's Formula
-    lines = []
-    for a, b in itertools.combinations(trig, 2):
-        lines.append(distance(a, b))
-    p = sum(lines) / 2
-    a, b, c = lines
+    p = sum(distances) / 2
+    a, b, c = distances
     return math.sqrt(p * (p - a) * (p - b) * (p - c))
 
 
-def trigAngles(trig):
-    lines = []
-    for a, b in itertools.combinations(trig, 2):
-        lines.append(distance(a, b))
-    a, b, c = lines
+def trigAngles(distances):
+    a, b, c = distances
     angle_1 = math.degrees(math.acos((b * b + c * c - a * a) / (2 * b * c)))
     angle_2 = math.degrees(math.acos((a * a + c * c - b * b) / (2 * a * c)))
     angle_3 = 180 - angle_1 - angle_2
@@ -102,18 +96,26 @@ def trigAngles(trig):
     return angle_1, angle_2, angle_3
 
 
-def isTooSmall(trig, area_limit=250, dist_limit=10, angle_limit=15):
-    if trigArea(trig) < area_limit:
+def isTooSmall(trig_node, area_limit=250, dist_limit=10, angle_limit=15):
+    trig = trig_node.data
+    distances = []
+    for a, b in itertools.combinations(trig, 2):
+        distances.append(math.hypot(*a - b))
+
+    if 'area' not in trig_node.attrs:
+        area = trigArea(distances)
+        trig_node.attrs['area'] = area
+    else:
+        area = trig_node.attrs['area']
+    if area < area_limit:
         # print("area limit hit")
         return True
-    for a, b in itertools.combinations(trig, 2):
-        dist = distance(a, b)
-        # print(dist)
+    for dist in distances:
         if dist < dist_limit:
-            #print("point distance limit hit")
+            # print("point distance limit hit")
             return True
 
-    angles = trigAngles(trig)
+    angles = trigAngles(distances)
     for angle in angles:
         # print('a',angle)
         if angle < angle_limit:
@@ -134,31 +136,32 @@ def getPointTowards(fr, to, scale=0.1):
 
 
 def inlayTriangle(trig):
-    trig = to_np(trig)
-    centroid = sum(trig) / len(trig)
-    inlaid = np.array([getPointTowards(pt, centroid) for pt in trig])
+    centroid = sum(trig.data) / len(trig.data)
+    inlaid = np.array([getPointTowards(pt, centroid) for pt in trig.data], dtype=np.int32)
+    inlaid = IDNode(inlaid)
     return inlaid, []
 
 
 def inlayCentroid(trig):
-    trig = to_np(trig)
-    centroid = sum(trig) / len(trig)
+    centroid = sum(trig.data) / len(trig.data)
     rets = []
-    for a, b in itertools.combinations(trig, 2):
-        rets.append(np.array([a, b, centroid]))
+    for a, b in itertools.combinations(trig.data, 2):
+        rets.append(IDNode(np.array([a, b, centroid], dtype=np.int32)))
     return rets[0], rets[1:]
 
 
-def inlayTriforce(trig):
-    trig = to_np(trig)
+def inlayTriforce(trig_node):
+    trig = trig_node.data
     a = (trig[0] + trig[1]) / 2
     b = (trig[1] + trig[2]) / 2
     c = (trig[2] + trig[0]) / 2
-    center = np.array([a, b, c])
-    top = np.array([trig[0], a, c])
-    left = np.array([trig[1], a, b])
-    right = np.array([trig[2], b, c])
-
+    center = IDNode(np.array([a, b, c], dtype=np.int32))
+    top = IDNode(np.array([trig[0], a, c], dtype=np.int32))
+    left = IDNode(np.array([trig[1], a, b], dtype=np.int32))
+    right = IDNode(np.array([trig[2], b, c], dtype=np.int32))
+    if 'area' in trig_node.attrs:
+        for node in [center, top, left, right]:
+            node.attrs['area'] = trig_node.attrs['area'] / 4
     return center, [top, left, right]
 
 
@@ -179,7 +182,7 @@ def getMidpoint(a, b):
 def inlayRays_deterministic(trig, n=None):
     if n is None:
         n = 5
-    trig = to_np(trig)
+
     # print(trig)
     rets = []
     origin_idx = 0
@@ -195,7 +198,10 @@ def inlayRays_deterministic(trig, n=None):
             nxt = points[i + 1]
         except IndexError:
             nxt = others[-1]
-        rets.append(np.array([origin, cur, nxt]))
+        node = IDNode(np.array([origin, cur, nxt]), dtype=np.int32)
+        if 'area' in trig.attrs:
+            node.attrs['area'] = trig.attrs['area'] / n
+        rets.append(node)
     # print(rets)
     # print(len(rets))
     return rets[0], rets[1:]
@@ -203,14 +209,15 @@ def inlayRays_deterministic(trig, n=None):
 
 def inlayRays(trig, n=None):
     if n is None:
-        n = random.randint(0, 7)
-    trig = to_np(trig)
+        n = random.randint(1, 7)
+
     # print(trig)
     rets = []
-    origin_idx = random.randint(0, len(trig) - 1)
-    origin = trig[origin_idx]
+    origin_idx = random.randint(0, len(trig.data) - 1)
+    # print(trig.data,origin_idx)
+    origin = trig.data[origin_idx]
     # print(origin_idx)
-    others = np.append(trig[:origin_idx], trig[origin_idx + 1:], axis=0)
+    others = np.append(trig.data[:origin_idx], trig.data[origin_idx + 1:], axis=0)
     # print(others)
     points = subdivideLine(others, n)
     points = [others[0]] + points
@@ -220,13 +227,17 @@ def inlayRays(trig, n=None):
             nxt = points[i + 1]
         except IndexError:
             nxt = others[-1]
-        rets.append(np.array([origin, cur, nxt]))
+        node = IDNode(np.array([origin, cur, nxt], dtype=np.int32))
+        if 'area' in trig.attrs:
+            node.attrs['area'] = trig.attrs['area'] / n
+        rets.append(node)
     # print(rets)
     # print(len(rets))
     return rets[0], rets[1:]
 
 
 def doRandomInlays(trig, n):
+    #print('Entering inlay',trig, trig.data)
     if trig.__class__ != IDNode:
         trig = IDNode(trig)
     gr = nx.DiGraph()
@@ -235,16 +246,16 @@ def doRandomInlays(trig, n):
     # fns = [inlayCentroid]
     if n <= 0:
         return [], gr
-    if isTooSmall(trig.data, angle_limit=5):
-        #print('Too small, aborting at n:', n)
+    if isTooSmall(trig, angle_limit=5):
+        # print('Too small, aborting at n:', n)
         return [], gr
 
-    inlay = trig.data
+    # inlay = trig.data
     ret = []
     fn = fns[random.randint(0, len(fns) - 1)]
-    main, extras = fn(inlay)
-    main = IDNode(main)
-    extras = [IDNode(extra) for extra in extras]
+    main, extras = fn(trig)
+    # main = IDNode(main)
+    # extras = [IDNode(extra) for extra in extras]
     gr.add_node(main)
     gr.add_nodes_from(extras)
 
@@ -265,12 +276,12 @@ def doRandomInlays(trig, n):
 
 def outlayReflect(trig):
     # Keep two points, reflect 1 across them.
-    p1, p2, p3 = trig
+    p1, p2, p3 = trig.data
     mid = getMidpoint(p1, p2)
     reflected = mid - (p3 - mid)
-    new = np.array([p1, p2, reflected])
+    new = IDNode(np.array([p1, p2, reflected], dtype=np.int32))
     gr = nx.DiGraph()
-    gr.add_node(IDNode(new))
+    gr.add_node(new)
     return [new], gr
 
 
@@ -305,21 +316,21 @@ def doInlays(trig, strategy, n=100, strategy_args=None):
     if strategy_args is None:
         strategy_args = []
 
-    if isTooSmall(trig.data, angle_limit=3):
-        #print('Too small, aborting at n:', n)
+    if isTooSmall(trig, angle_limit=3):
+        # print('Too small, aborting at n:', n)
         return [], nx.DiGraph()
 
     gr = nx.DiGraph()
     gr.add_node(trig)
-    inlay = trig.data
+
     ret = []
 
     all_strategy_args = [trig, n] + strategy_args
     fn = strategy(*all_strategy_args)
-    #print(fn)
-    main, extras = fn(inlay)
-    main = IDNode(main)
-    extras = [IDNode(extra) for extra in extras]
+    # print(fn)
+    main, extras = fn(trig)
+    # main = IDNode(main)
+    # extras = [IDNode(extra) for extra in extras]
     gr.add_node(main)
     gr.add_nodes_from(extras)
     for node in [main] + extras:

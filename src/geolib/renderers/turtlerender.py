@@ -14,23 +14,33 @@ class TurtleRenderer(BaseRenderer):
         self.mode = mode
 
     def translate_coords(self, screen, point):
-        print('translate:', point)
-        print(screen.screensize())
+        # print('translate:', point)
+        # print(screen.screensize())
         x = point[0] - screen.screensize()[0] / 2
         y = point[1] - screen.screensize()[1] / 2
         return x, -y
 
-    def draw_polygon(self, polygon, screen, linecolor=None, fillcolor=None):
+    def draw_polygon(self, node, screen):
         pen = RawTurtle(screen)
         pen.speed(0)
         pen.hideturtle()
         pen.penup()
+
+        try:
+            linecolor = node.attrs['color']
+        except KeyError:
+            linecolor = None
+        try:
+            fillcolor = node.attrs['fillcolor']
+        except KeyError:
+            fillcolor = None
 
         if linecolor is not None:
             pen.pencolor(*linecolor)
         else:
             pen.pencolor(*(0, 0, 0))
 
+        polygon = node.data
         polygon = [self.translate_coords(screen, x) for x in polygon]
         points = to_tups(polygon)
         pen.goto(*(points[0]))

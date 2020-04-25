@@ -13,16 +13,7 @@ class BaseRenderer(object):
         if reversetop:
             topological_ordered = reversed(topological_ordered)
         for node in topological_ordered:
-            data = node.data
-            try:
-                color = node.attrs['color']
-            except KeyError:
-                color = None
-            try:
-                fillcolor = node.attrs['fillcolor']
-            except KeyError:
-                fillcolor = None
-            self.draw_polygon(data, canvas, linecolor=color, fillcolor=fillcolor)
+            self.draw_polygon(node, canvas)
         return canvas
 
     def draw_nodes(self, nodes, canvas=None):
@@ -30,39 +21,36 @@ class BaseRenderer(object):
             canvas = self.blank_image()
 
         for node in nodes:
-            data = node.data
-            try:
-                color = node.attrs['color']
-            except KeyError:
-                color = None
-            try:
-                fillcolor = node.attrs['fillcolor']
-            except KeyError:
-                fillcolor = None
-
-            canvas = self.draw_polygon(data, canvas, linecolor=color, fillcolor=fillcolor)
+            canvas = self.draw_polygon(node, canvas)
         return canvas
 
-    def animate_fn(self, gr, fn, canvas, times_to_apply=25):
+    def animate_fn(self, gr, fn, canvas, fn_kwargs=None, times_to_apply=25, bounce=True, blend=False):
         if canvas is None:
             canvas = self.blank_image()
-
+        if fn_kwargs is None:
+            fn_kwargs = {}
         frame_list = []
         frame = canvas
-
+        flip_it = -1
         for i in range(times_to_apply):
-            changelist = sorted(fn(gr))[::-1]
+            changelist = sorted(fn(gr, fn_kwargs=fn_kwargs))[::flip_it]
+            if bounce:
+                flip_it *= -1
             curr = changelist[0][0]
             nodes = []
             for generation, node in changelist:
                 if generation != curr:
-                    # prev_frame = frame
-                    frame = self.draw_nodes(nodes, frame)
-                    # frame_list += blend_frames(prev_frame, frame, 5)
-                    frame_list.append(frame)
+                    prev_frame = frame
+                    frame = self.draw_nodes(nodes, frame.copy())
+                    if not blend:
+                        frame_list.append(frame)
+                    else:
+                        frame_list += self.blend_frames(prev_frame, frame, 5)
+
                     nodes = []
                 nodes.append(node)
                 curr = generation
+        print(frame_list)
         return frame_list
 
     def draw_polygon(self, polygon, canvas, linecolor=None, fillcolor=None):
