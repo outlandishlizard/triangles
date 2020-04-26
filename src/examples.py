@@ -72,7 +72,7 @@ def fill_from_image(length, width, source_image=None):
     # for i in range(20):
     img = None
     if source_image is None:
-        source_image = cv2.imread('../mushrooms.jpg')
+        source_image = cv2.imread('../mountain.jpg')
     for i in range(1):
         for trig in fillingTiled(length, width, n=4):
             # trig -= (length,width)
