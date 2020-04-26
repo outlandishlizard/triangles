@@ -127,7 +127,7 @@ def tests():
     img = colorprop_animated_pillow(350, 350)
     PillowRenderer.save_animation('./colorprop_animated_pillow.gif', img)
     print("Attempting a render stealing colors from a source image using pillow")
-    img = fill_from_image(400, 600)
+    img = fill_from_image(640, 426)
     img.save('./fill_from_image.png')
     print("Testing triangle outlay features, rendering using pillow")
     img = test_outlays(2000, 2000)
